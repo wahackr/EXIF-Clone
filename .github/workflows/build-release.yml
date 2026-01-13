@@ -95,6 +95,10 @@ jobs:
           files: |
             ./artifacts/linux/EXIF-Clone
             ./artifacts/windows/EXIF-Clone.exe
+          body: |
+            ## Downloads
+            - **EXIF-Clone** - Built for Linux (x86_64)
+            - **EXIF-Clone.exe** - Built for Windows (64-bit)
           draft: false
           prerelease: false
           generate_release_notes: true
