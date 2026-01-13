@@ -11,6 +11,7 @@ from PIL import Image
 
 from libs.main import (
     HEIF_SUPPORTED,
+    _create_backup,
     _extract_date_data,
     _is_heic,
     _load_exif_from_heic,
@@ -48,6 +49,55 @@ def source_heic_with_gps(samples_dir):
 def target_jpg_without_gps(samples_dir):
     """Path to JPEG target file without GPS data"""
     return str(samples_dir / "3ad41821-4905-4580-b82d-12f707a91512.jpg")
+
+
+class TestCreateBackup:
+    """Test _create_backup helper function"""
+
+    def test_create_backup_creates_file(self, temp_dir, samples_dir):
+        """Test that backup file is created"""
+        # Copy a test file to temp directory
+        source_file = samples_dir / "exif.jpg"
+        test_file = os.path.join(temp_dir, "test.jpg")
+        shutil.copy(source_file, test_file)
+
+        # Create backup
+        backup_path = _create_backup(test_file)
+
+        # Verify backup exists
+        assert os.path.exists(backup_path)
+        assert backup_path == f"{test_file}.backup"
+
+    def test_backup_preserves_content(self, temp_dir, samples_dir):
+        """Test that backup file has same content as original"""
+        # Copy a test file to temp directory
+        source_file = samples_dir / "exif.jpg"
+        test_file = os.path.join(temp_dir, "test.jpg")
+        shutil.copy(source_file, test_file)
+
+        # Create backup
+        backup_path = _create_backup(test_file)
+
+        # Verify content is identical
+        with open(test_file, "rb") as f1, open(backup_path, "rb") as f2:
+            assert f1.read() == f2.read()
+
+    def test_backup_preserves_metadata(self, temp_dir, samples_dir):
+        """Test that backup file preserves file metadata"""
+        # Copy a test file to temp directory
+        source_file = samples_dir / "exif.jpg"
+        test_file = os.path.join(temp_dir, "test.jpg")
+        shutil.copy(source_file, test_file)
+
+        # Get original modification time
+        original_mtime = os.path.getmtime(test_file)
+
+        # Create backup
+        backup_path = _create_backup(test_file)
+
+        # Verify metadata is preserved (using copy2)
+        backup_mtime = os.path.getmtime(backup_path)
+        assert backup_mtime == original_mtime
 
 
 class TestIsHeic:

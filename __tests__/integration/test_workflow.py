@@ -364,3 +364,52 @@ class TestEndToEndWorkflow:
                 target_exif["GPS"][piexif.GPSIFD.GPSLongitude]
                 == source_gps[piexif.GPSIFD.GPSLongitude]
             )
+
+    def test_backup_created_during_transfer(self, samples_dir, temp_dir):
+        """
+        Integration test: Verify backup files are created during GPS transfer
+        """
+        # Arrange
+        source = str(samples_dir / "exif.jpg")
+        target_src = samples_dir / "3ad41821-4905-4580-b82d-12f707a91512.jpg"
+        target = os.path.join(temp_dir, "target.jpg")
+        shutil.copy(target_src, target)
+
+        # Act: Transfer GPS data
+        results = transfer_gps_data_batch(source, [target])
+
+        # Assert: Verify backup was created
+        backup_path = f"{target}.backup"
+        assert os.path.exists(backup_path), "Backup file should exist"
+
+        # Verify original file was modified (has GPS now)
+        target_exif = piexif.load(target)
+        assert "GPS" in target_exif
+        assert target_exif["GPS"]
+
+        # Verify backup doesn't have GPS (original state)
+        backup_exif = piexif.load(backup_path)
+        assert not backup_exif.get("GPS"), "Backup should not have GPS data"
+
+    def test_multiple_backups_created(self, samples_dir, temp_dir):
+        """
+        Integration test: Verify backups are created for multiple files
+        """
+        # Arrange
+        source = str(samples_dir / "exif.jpg")
+        targets = []
+        for i in range(3):
+            target = os.path.join(temp_dir, f"target{i}.jpg")
+            shutil.copy(samples_dir / "3ad41821-4905-4580-b82d-12f707a91512.jpg", target)
+            targets.append(target)
+
+        # Act: Transfer GPS data
+        results = transfer_gps_data_batch(source, targets)
+
+        # Assert: Verify all backups were created
+        for target in targets:
+            backup_path = f"{target}.backup"
+            assert os.path.exists(backup_path), f"Backup should exist for {target}"
+
+        # Verify processing succeeded
+        assert results["success_count"] == 3

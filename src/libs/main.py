@@ -1,6 +1,7 @@
 """Business logic for GPS EXIF data transfer"""
 
 import os
+import shutil
 
 import piexif
 from PIL import Image
@@ -12,6 +13,21 @@ try:
     HEIF_SUPPORTED = True
 except ImportError:
     HEIF_SUPPORTED = False
+
+
+def _create_backup(file_path):
+    """
+    Create a backup of a file before modification.
+    
+    Args:
+        file_path: Path to the file to backup
+        
+    Returns:
+        str: Path to the backup file
+    """
+    backup_path = f"{file_path}.backup"
+    shutil.copy2(file_path, backup_path)
+    return backup_path
 
 
 def transfer_gps_data_batch(
@@ -70,6 +86,9 @@ def transfer_gps_data_batch(
                 # Update progress
                 if progress_callback:
                     progress_callback(idx, total, f"({os.path.basename(target_path)})")
+
+                # Create backup before modification
+                _create_backup(target_path)
 
                 if _is_heic(target_path):
                     skipped = _write_exif_to_heic(
@@ -181,6 +200,9 @@ def transfer_gps_data(source_path, target_paths, options=None, progress_callback
                 # Update progress
                 if progress_callback:
                     progress_callback(idx, total, f"({os.path.basename(target_path)})")
+
+                # Create backup before modification
+                _create_backup(target_path)
 
                 if _is_heic(target_path):
                     skipped = _write_exif_to_heic(
