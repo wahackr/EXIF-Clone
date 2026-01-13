@@ -17,7 +17,7 @@ A simple GUI application for transferring GPS EXIF data from one photo to multip
 
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.12 or higher
 - uv (recommended) or pip
 
 ### Setup
@@ -32,7 +32,7 @@ cd EXIF-Clone
 
 **Using uv (recommended):**
 ```bash
-uv pip install -r requirements.txt
+uv sync
 ```
 
 **Using pip:**
@@ -46,6 +46,7 @@ pip install -r requirements.txt
 - `piexif` - EXIF data manipulation
 - `Pillow` - Image processing
 - `pillow-heif` - HEIC/HEIF format support
+- `pyinstaller` - For building standalone binaries
 
 ## Usage
 
@@ -220,7 +221,7 @@ HEIC files are handled specially:
 
 ## License
 
-[Add your license here]
+MIT License - see [LICENSE](LICENSE) file for details
 
 ## Contributing
 
