@@ -3,3 +3,11 @@ photos/*
 .venv
 build/*
 dist/*
+.coverage
+htmlcov/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+*.egg-info/

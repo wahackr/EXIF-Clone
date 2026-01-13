@@ -105,9 +105,18 @@ EXIF-Clone/
 │   │   └── main.py         # GUI layer (CustomTkinter)
 │   └── libs/
 │       └── main.py         # Business logic (EXIF processing)
+├── __tests__/
+│   ├── unit/               # Unit tests
+│   ├── integration/        # Integration tests
+│   ├── test.sh             # Bash test runner
+│   ├── run_tests.py        # Python test runner
+│   ├── README.md           # Testing guide
+│   └── TEST_SUMMARY.md     # Test documentation
+├── samples/                # Test sample images
 ├── requirements.txt        # Python dependencies
-├── pyproject.toml         # Project configuration
-└── README.md              # This file
+├── pyproject.toml          # Project configuration
+├── pytest.ini              # Pytest configuration
+└── README.md               # This file
 ```
 
 ## Architecture
@@ -218,6 +227,46 @@ HEIC files are handled specially:
 **Permission errors:**
 - Ensure you have write permissions for the target files
 - On macOS, you may need to grant location permissions to Terminal/Python
+
+## Testing
+
+Comprehensive test suite with 31 tests covering all functionality.
+
+### Quick Test Commands
+
+```bash
+# Run all tests
+__tests__/test.sh
+
+# Run unit tests only
+__tests__/test.sh unit
+
+# Run integration tests only
+__tests__/test.sh integration
+
+# Run with coverage report
+__tests__/test.sh coverage
+
+# Or use Python test runner
+uv run python __tests__/run_tests.py
+
+# Or use pytest directly
+uv run pytest __tests__/ -v
+```
+
+### Test Coverage
+
+- ✅ HEIC file EXIF handling
+- ✅ JPG file EXIF handling
+- ✅ Upper case file extensions
+- ✅ Lower case file extensions
+- ✅ Files without EXIF data
+- ✅ Batch processing
+- ✅ Error handling
+- ✅ Progress callbacks
+- ✅ Skip/overwrite options
+
+See [__tests__/README.md](__tests__/README.md) for detailed testing documentation.
 
 ## License
 
