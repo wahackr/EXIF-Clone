@@ -378,6 +378,9 @@ class TestEndToEndWorkflow:
         # Act: Transfer GPS data
         results = transfer_gps_data_batch(source, [target])
 
+        # Assert: Verify transfer succeeded
+        assert results["success_count"] == 1
+
         # Assert: Verify backup was created
         backup_path = f"{target}.backup"
         assert os.path.exists(backup_path), "Backup file should exist"

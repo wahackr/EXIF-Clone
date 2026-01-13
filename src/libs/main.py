@@ -18,10 +18,10 @@ except ImportError:
 def _create_backup(file_path):
     """
     Create a backup of a file before modification.
-    
+
     Args:
         file_path: Path to the file to backup
-        
+
     Returns:
         str: Path to the backup file
     """
