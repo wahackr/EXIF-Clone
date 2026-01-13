@@ -275,6 +275,14 @@ class TestTransferGpsDataBatch:
         target_copy = os.path.join(temp_dir, "target.jpg")
         shutil.copy(target_jpg_without_gps, target_copy)
 
+        # Get source date data
+        source_exif = piexif.load(source_jpg_with_gps)
+        source_date_original = source_exif["Exif"].get(piexif.ExifIFD.DateTimeOriginal)
+        source_date_digitized = source_exif["Exif"].get(
+            piexif.ExifIFD.DateTimeDigitized
+        )
+        source_datetime = source_exif["0th"].get(piexif.ImageIFD.DateTime)
+
         # Transfer with copy_date=True
         options = {"copy_date": True}
         results = transfer_gps_data_batch(
@@ -283,3 +291,36 @@ class TestTransferGpsDataBatch:
 
         # Verify results
         assert results["success_count"] == 1
+
+        # Verify date data was copied correctly
+        target_exif = piexif.load(target_copy)
+
+        # Check DateTimeOriginal matches
+        if source_date_original:
+            assert (
+                target_exif["Exif"].get(piexif.ExifIFD.DateTimeOriginal)
+                == source_date_original
+            )
+
+        # Check DateTimeDigitized matches
+        if source_date_digitized:
+            assert (
+                target_exif["Exif"].get(piexif.ExifIFD.DateTimeDigitized)
+                == source_date_digitized
+            )
+
+        # Check DateTime matches
+        if source_datetime:
+            assert target_exif["0th"].get(piexif.ImageIFD.DateTime) == source_datetime
+
+        # Check timezone offset tags are copied
+        for offset_tag in [
+            36880,
+            36881,
+            36882,
+        ]:  # OffsetTime, OffsetTimeOriginal, OffsetTimeDigitized
+            if offset_tag in source_exif.get("Exif", {}):
+                assert (
+                    target_exif["Exif"].get(offset_tag)
+                    == source_exif["Exif"][offset_tag]
+                ), f"Timezone offset tag {offset_tag} not copied correctly"

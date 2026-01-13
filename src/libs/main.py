@@ -252,12 +252,22 @@ def _load_exif_from_heic(file_path):
 
 
 def _extract_date_data(exif_dict):
-    """Extract date/time EXIF data from source"""
+    """Extract date/time EXIF data from source including timezone offsets"""
     date_data = {}
 
     # Extract from Exif IFD
     if "Exif" in exif_dict:
+        # DateTime tags
         for tag in [piexif.ExifIFD.DateTimeOriginal, piexif.ExifIFD.DateTimeDigitized]:
+            if tag in exif_dict["Exif"]:
+                date_data[tag] = exif_dict["Exif"][tag]
+
+        # Timezone offset tags (EXIF 2.31)
+        for tag in [
+            36880,
+            36881,
+            36882,
+        ]:  # OffsetTime, OffsetTimeOriginal, OffsetTimeDigitized
             if tag in exif_dict["Exif"]:
                 date_data[tag] = exif_dict["Exif"][tag]
 
@@ -269,7 +279,7 @@ def _extract_date_data(exif_dict):
 
 
 def _apply_date_data(exif_dict, date_data):
-    """Apply date/time data to target EXIF"""
+    """Apply date/time data to target EXIF including timezone offsets"""
     if not date_data:
         return
 
@@ -281,7 +291,14 @@ def _apply_date_data(exif_dict, date_data):
 
     # Apply date tags
     for tag, value in date_data.items():
-        if tag in [piexif.ExifIFD.DateTimeOriginal, piexif.ExifIFD.DateTimeDigitized]:
+        if tag in [
+            piexif.ExifIFD.DateTimeOriginal,
+            piexif.ExifIFD.DateTimeDigitized,
+            36880,
+            36881,
+            36882,
+        ]:
+            # DateTime, DateTimeDigitized, OffsetTime, OffsetTimeOriginal, OffsetTimeDigitized
             exif_dict["Exif"][tag] = value
         elif tag == piexif.ImageIFD.DateTime:
             exif_dict["0th"][tag] = value
