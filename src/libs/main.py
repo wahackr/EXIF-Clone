@@ -20,8 +20,8 @@ def _should_skip_file(file_path, options):
     Check if a file should be skipped (already has GPS and overwrite disabled).
 
     Args:
-        file_path: Path to the file to check
-        options: Dict with 'overwrite_gps' flag
+        file_path (str): Path to the file to check
+        options (dict): Configuration options with 'overwrite_gps' boolean flag
 
     Returns:
         bool: True if file should be skipped, False otherwise
@@ -50,13 +50,19 @@ def _create_backup(file_path):
     Create a backup of a file before modification.
 
     Args:
-        file_path: Path to the file to backup
+        file_path (str): Path to the file to backup
 
     Returns:
         str: Path to the backup file
+
+    Raises:
+        OSError: If backup creation fails due to permissions or disk space
     """
     backup_path = f"{file_path}.backup"
-    shutil.copy2(file_path, backup_path)
+    try:
+        shutil.copy2(file_path, backup_path)
+    except (OSError, IOError) as e:
+        raise OSError(f"Failed to create backup for {file_path}: {str(e)}")
     return backup_path
 
 
