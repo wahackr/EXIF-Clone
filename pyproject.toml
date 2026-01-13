@@ -10,5 +10,12 @@ dependencies = [
     "piexif>=1.1.3",
     "pillow>=12.1.0",
     "pillow-heif>=1.1.1",
-    "pyinstaller[dev]>=6.17.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-mock>=3.12.0",
+    "pytest-cov>=4.1.0",
+    "pyinstaller>=6.17.0",
 ]
