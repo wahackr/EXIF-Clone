@@ -268,10 +268,92 @@ uv run pytest __tests__/ -v
 
 See [__tests__/README.md](__tests__/README.md) for detailed testing documentation.
 
+## Development & CI/CD
+
+### Development Workflow
+
+This project follows a Git branching workflow with automated testing:
+
+1. **Development Branch**: All development work happens on the `development` branch
+2. **Automated Testing**: Every push to `development` triggers automated tests via GitHub Actions
+3. **Pull Requests**: Changes are merged to `master` via Pull Requests (required)
+4. **Protected Master**: The `master` branch is protected and requires passing tests
+
+### CI/CD Pipelines
+
+**Automated Testing** (`.github/workflows/test-dev-branch.yml`)
+- Triggers on push/PR to `development` branch
+- Runs all 31 unit and integration tests
+- Uses Python 3.12 with uv package manager
+- Reports test results and coverage
+
+**Automated Release Builds** (`.github/workflows/build-release.yml`)
+- Triggers when version tags (e.g., `v1.0.0`) are pushed
+- Builds standalone binaries for Linux (x86_64) and Windows (64-bit)
+- Creates GitHub release automatically
+- Attaches binaries with platform descriptions
+
+### Release Process
+
+To create a new release:
+
+1. **Develop on the development branch:**
+   ```bash
+   git checkout development
+   # Make changes, commit, and push
+   git push origin development
+   ```
+
+2. **Create Pull Request on GitHub:**
+   - Navigate to GitHub repository
+   - Create PR from `development` → `master`
+   - Wait for CI tests to pass
+   - Review and merge the PR
+
+3. **Create release tag:**
+   ```bash
+   git checkout master
+   git pull origin master
+   git tag v1.x.x
+   git push origin v1.x.x
+   ```
+
+4. **Automated release build:**
+   - GitHub Actions automatically builds Linux and Windows binaries
+   - Creates a new GitHub release with version tag
+   - Attaches both binaries to the release
+   - Adds platform descriptions to release notes
+
+**Note:** If master branch has push protection, tags must be created via GitHub UI:
+- Go to Releases → Draft a new release
+- Create new tag (e.g., `v1.x.x`) targeting `master` branch
+- Publish release (workflow triggers automatically)
+
+### Running Tests Locally
+
+```bash
+# Run all tests
+__tests__/test.sh
+
+# Run with coverage
+__tests__/test.sh coverage
+
+# Or use pytest directly
+uv run pytest __tests__/ -v
+```
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please follow the development workflow:
+
+1. Fork the repository
+2. Create a feature branch from `development`
+3. Make your changes with tests
+4. Ensure all tests pass locally
+5. Submit a Pull Request to the `development` branch
+
+All PRs must pass automated tests before merging.
