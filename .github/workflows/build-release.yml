@@ -1,0 +1,98 @@
+name: Build Release Binaries
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags like v1.0.0
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+      
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version-file: '.python-version'
+      
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y tk8.6
+      
+      - name: Install uv
+        run: pip install uv
+      
+      - name: Install dependencies
+        run: uv sync --extra dev
+      
+      - name: Build binary
+        run: uv run pyinstaller EXIF-Clone.spec --clean
+      
+      - name: Upload Linux binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: EXIF-Clone-Linux
+          path: dist/EXIF-Clone
+          retention-days: 90
+
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+      
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version-file: '.python-version'
+      
+      - name: Install uv
+        run: pip install uv
+      
+      - name: Install dependencies
+        run: uv sync --extra dev
+      
+      - name: Build binary
+        run: uv run pyinstaller EXIF-Clone.spec --clean
+      
+      - name: Upload Windows binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: EXIF-Clone-Windows
+          path: dist/EXIF-Clone.exe
+          retention-days: 90
+
+  create-release:
+    needs: [build-linux, build-windows]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Download Linux binary
+        uses: actions/download-artifact@v4
+        with:
+          name: EXIF-Clone-Linux
+          path: ./artifacts/linux
+      
+      - name: Download Windows binary
+        uses: actions/download-artifact@v4
+        with:
+          name: EXIF-Clone-Windows
+          path: ./artifacts/windows
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ./artifacts/linux/EXIF-Clone
+            ./artifacts/windows/EXIF-Clone.exe
+          draft: false
+          prerelease: false
+          generate_release_notes: true
