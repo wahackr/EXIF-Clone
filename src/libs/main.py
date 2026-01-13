@@ -15,36 +15,6 @@ except ImportError:
     HEIF_SUPPORTED = False
 
 
-def _should_skip_file(file_path, options):
-    """
-    Check if a file should be skipped (already has GPS and overwrite disabled).
-
-    Args:
-        file_path (str): Path to the file to check
-        options (dict): Configuration options with 'overwrite_gps' boolean flag
-
-    Returns:
-        bool: True if file should be skipped, False otherwise
-    """
-    if options.get("overwrite_gps", True):
-        return False  # Don't skip if overwrite is enabled
-
-    try:
-        if _is_heic(file_path):
-            img = Image.open(file_path)
-            existing_exif = img.info.get("exif", b"")
-            if existing_exif:
-                exif_dict = piexif.load(existing_exif)
-            else:
-                return False  # No EXIF, don't skip
-        else:
-            exif_dict = piexif.load(file_path)
-
-        return bool(exif_dict.get("GPS"))  # Skip if has GPS
-    except Exception:
-        return False  # On error, don't skip
-
-
 def _create_backup(file_path):
     """
     Create a backup of a file before modification.
@@ -122,11 +92,6 @@ def transfer_gps_data_batch(
                 # Update progress
                 if progress_callback:
                     progress_callback(idx, total, f"({os.path.basename(target_path)})")
-
-                # Check if file should be skipped (already has GPS)
-                if _should_skip_file(target_path, options):
-                    results["skipped"] += 1
-                    continue
 
                 # Create backup before modification
                 _create_backup(target_path)
@@ -241,11 +206,6 @@ def transfer_gps_data(source_path, target_paths, options=None, progress_callback
                 # Update progress
                 if progress_callback:
                     progress_callback(idx, total, f"({os.path.basename(target_path)})")
-
-                # Check if file should be skipped (already has GPS)
-                if _should_skip_file(target_path, options):
-                    results["skipped"] += 1
-                    continue
 
                 # Create backup before modification
                 _create_backup(target_path)

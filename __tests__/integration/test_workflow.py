@@ -417,9 +417,9 @@ class TestEndToEndWorkflow:
         # Verify processing succeeded
         assert results["success_count"] == 3
 
-    def test_no_backup_for_skipped_files(self, samples_dir, temp_dir):
+    def test_backup_created_for_skipped_files(self, samples_dir, temp_dir):
         """
-        Integration test: Verify backups are NOT created for files that are skipped
+        Integration test: Verify backups ARE created even for files that are skipped
         """
         # Arrange: Use a file that already has GPS
         source = str(samples_dir / "exif.jpg")
@@ -434,6 +434,6 @@ class TestEndToEndWorkflow:
         assert results["skipped"] == 1
         assert results["success_count"] == 0
 
-        # Assert: No backup should be created for skipped file
+        # Assert: Backup should still be created even for skipped file
         backup_path = f"{target}.backup"
-        assert not os.path.exists(backup_path), "Backup should NOT exist for skipped files"
+        assert os.path.exists(backup_path), "Backup SHOULD exist even for skipped files"
