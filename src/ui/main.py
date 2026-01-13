@@ -98,9 +98,13 @@ class ExifTransferApp(ctk.CTk):
                 self.location_label.configure(
                     text=f"📍 Location: {gps_info['latitude']:.5f}, {gps_info['longitude']:.5f} (Click to view on map)"
                 )
-                self.location_label.pack(pady=5)
+                # Unbind previous click events to avoid multiple bindings
+                self.location_label.unbind("<Button-1>")
                 # Bind click event to open Google Maps
                 self.location_label.bind("<Button-1>", lambda e: self._open_maps_url(gps_info['maps_url']))
+                # Show the label (it's initially hidden)
+                if not self.location_label.winfo_ismapped():
+                    self.location_label.pack(pady=5)
             else:
                 # Hide location label if no GPS data
                 self.location_label.pack_forget()

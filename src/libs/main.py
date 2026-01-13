@@ -44,11 +44,11 @@ def extract_gps_coordinates(file_path):
             return None
 
         # Extract latitude
-        lat_ref = gps_data[1].decode() if isinstance(gps_data[1], bytes) else gps_data[1]
+        lat_ref = _decode_gps_ref(gps_data[1])
         lat_decimal = _gps_to_decimal(gps_data[2], lat_ref)
 
         # Extract longitude
-        lon_ref = gps_data[3].decode() if isinstance(gps_data[3], bytes) else gps_data[3]
+        lon_ref = _decode_gps_ref(gps_data[3])
         lon_decimal = _gps_to_decimal(gps_data[4], lon_ref)
 
         # Generate Google Maps URL
@@ -61,6 +61,19 @@ def extract_gps_coordinates(file_path):
         }
     except Exception:
         return None
+
+
+def _decode_gps_ref(ref_data):
+    """
+    Decode GPS reference data to string.
+
+    Args:
+        ref_data: GPS reference data (bytes or string)
+
+    Returns:
+        str: Decoded reference ('N', 'S', 'E', or 'W')
+    """
+    return ref_data.decode() if isinstance(ref_data, bytes) else ref_data
 
 
 def _gps_to_decimal(gps_coords, ref):
