@@ -5,7 +5,9 @@ A simple GUI application for transferring GPS EXIF data from one photo to multip
 ## Features
 
 - 🗺️ Transfer GPS coordinates from source image to multiple target images
-- 📸 Support for multiple image formats: JPEG, PNG, TIFF, HEIC/HEIF
+- � Optional: Copy creation date/time from source (great for fixing WhatsApp photos)
+- 🔄 Optional: Skip files that already have GPS data (selective updates)
+- �📸 Support for multiple image formats: JPEG, PNG, TIFF, HEIC/HEIF
 - 💼 Case-insensitive file extension support (e.g., `.jpg`, `.JPG`)
 - 🖥️ Clean and intuitive GUI built with CustomTkinter
 - ✅ Batch processing with error handling and progress reporting
@@ -74,10 +76,14 @@ EXIF-Clone.exe
 
 1. **Select Source Photo**: Click "Choose Source" and select an image that contains GPS metadata
 2. **Select Target Photos**: Click "Choose Targets" and select one or more images you want to add GPS data to
-3. **Transfer GPS Data**: Click "Transfer GPS Data" to copy the GPS coordinates from the source to all target images
+3. **Configure Options** (optional):
+   - **Copy creation date from source**: When enabled, also copies DateTimeOriginal, DateTimeDigitized, and DateTime fields. Useful for fixing dates on photos received via WhatsApp or other apps that reset file timestamps.
+   - **Overwrite GPS if target already has it**: When disabled, skips files that already contain GPS data, useful for selective updates without overwriting existing location data.
+4. **Transfer GPS Data**: Click "Transfer GPS Data" to copy the GPS coordinates (and optionally dates) from the source to all target images
 
 The application will display:
 - Success message with the number of files processed
+- Number of files skipped (if any had GPS and overwrite was disabled)
 - Partial success if some files fail
 - Error messages if the source has no GPS data or processing fails
 
@@ -175,11 +181,22 @@ uv run pyinstaller --onefile --paths ./src --name EXIF-Clone ./src/app.py
 ### GPS Data Transfer Process
 
 1. Load EXIF data from source image
-2. Extract GPS metadata
+2. Extract GPS metadata (and optionally date/time data)
 3. For each target image:
    - Load existing EXIF data
+   - Check if GPS should be skipped (if already exists and overwrite disabled)
    - Inject GPS metadata
+   - Inject date/time data (if option enabled)
    - Save updated EXIF data back to the file
+
+### Date/Time Data Handling
+
+When "Copy creation date from source" is enabled, the following EXIF fields are copied:
+- **DateTimeOriginal**: The date/time when the photo was originally taken
+- **DateTimeDigitized**: The date/time when the photo was digitized
+- **DateTime**: The file modification date/time
+
+This is particularly useful for photos received via messaging apps (WhatsApp, Telegram, etc.) that strip the original creation date.
 
 ### HEIC Support
 
