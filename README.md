@@ -49,6 +49,7 @@ pip install -r requirements.txt
 
 ### Running the Application
 
+**From Source:**
 ```bash
 uv run python src/app.py
 ```
@@ -56,6 +57,17 @@ uv run python src/app.py
 Or with standard Python:
 ```bash
 python src/app.py
+```
+
+**Standalone Binary:**
+
+If you have a pre-built binary, simply run:
+```bash
+# Linux
+./EXIF-Clone
+
+# Windows
+EXIF-Clone.exe
 ```
 
 ### How to Use
@@ -103,6 +115,60 @@ This architecture makes the business logic:
 - Testable without GUI dependencies
 - Reusable in CLI or API applications
 - Easy to maintain and extend
+
+## Building Standalone Binaries
+
+You can build standalone executables that run without Python installed.
+
+### Prerequisites for Building
+
+**Linux:**
+```bash
+# Install Tk library (required for GUI)
+sudo apt install tk8.6
+
+# Install PyInstaller
+uv pip install pyinstaller
+```
+
+**Windows:**
+```cmd
+# Install PyInstaller
+uv pip install pyinstaller
+```
+
+### Build Instructions
+
+**Both Linux and Windows:**
+```bash
+# Build using the spec file (recommended)
+uv run pyinstaller EXIF-Clone.spec --clean
+```
+
+Or build from scratch:
+```bash
+# Linux
+uv run pyinstaller --onefile --paths ./src --name EXIF-Clone ./src/app.py
+
+# Windows
+uv run pyinstaller --onefile --paths ./src --name EXIF-Clone ./src/app.py
+```
+
+### Output
+
+- **Linux**: `dist/EXIF-Clone` (~30MB)
+- **Windows**: `dist/EXIF-Clone.exe` (~35-40MB)
+
+### Distribution Notes
+
+**Linux:**
+- The binary is self-contained but requires system libraries: `libtk8.6` and `libtcl8.6`
+- Users can install with: `sudo apt install tk8.6`
+
+**Windows:**
+- The `.exe` is fully self-contained
+- No additional dependencies needed
+- No console window appears (GUI-only mode)
 
 ## Technical Details
 
