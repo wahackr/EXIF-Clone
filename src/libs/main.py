@@ -15,12 +15,13 @@ except ImportError:
     HEIF_SUPPORTED = False
 
 
-def _create_backup(file_path):
+def _create_backup(file_path, backup_dir=None):
     """
     Create a backup of a file before modification.
 
     Args:
         file_path (str): Path to the file to backup
+        backup_dir (str): Directory where backups will be stored. If None, creates 'backup' folder in parent dir
 
     Returns:
         str: Path to the backup file
@@ -28,7 +29,18 @@ def _create_backup(file_path):
     Raises:
         OSError: If backup creation fails due to permissions or disk space
     """
-    backup_path = f"{file_path}.backup"
+    # Determine backup directory
+    if backup_dir is None:
+        parent_dir = os.path.dirname(file_path)
+        backup_dir = os.path.join(parent_dir, "backup")
+    
+    # Create backup directory if it doesn't exist
+    os.makedirs(backup_dir, exist_ok=True)
+    
+    # Create backup with original filename in backup directory
+    filename = os.path.basename(file_path)
+    backup_path = os.path.join(backup_dir, filename)
+    
     try:
         shutil.copy2(file_path, backup_path)
     except (OSError, IOError) as e:

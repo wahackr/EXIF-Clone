@@ -55,7 +55,7 @@ class TestCreateBackup:
     """Test _create_backup helper function"""
 
     def test_create_backup_creates_file(self, temp_dir, samples_dir):
-        """Test that backup file is created"""
+        """Test that backup file is created in backup folder"""
         # Copy a test file to temp directory
         source_file = samples_dir / "exif.jpg"
         test_file = os.path.join(temp_dir, "test.jpg")
@@ -64,9 +64,11 @@ class TestCreateBackup:
         # Create backup
         backup_path = _create_backup(test_file)
 
-        # Verify backup exists
+        # Verify backup exists in backup folder
         assert os.path.exists(backup_path)
-        assert backup_path == f"{test_file}.backup"
+        expected_backup_path = os.path.join(temp_dir, "backup", "test.jpg")
+        assert backup_path == expected_backup_path
+        assert os.path.exists(os.path.join(temp_dir, "backup"))
 
     def test_backup_preserves_content(self, temp_dir, samples_dir):
         """Test that backup file has same content as original"""

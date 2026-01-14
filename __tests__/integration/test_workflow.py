@@ -367,7 +367,7 @@ class TestEndToEndWorkflow:
 
     def test_backup_created_during_transfer(self, samples_dir, temp_dir):
         """
-        Integration test: Verify backup files are created during GPS transfer
+        Integration test: Verify backup files are created during GPS transfer in backup folder
         """
         # Arrange
         source = str(samples_dir / "exif.jpg")
@@ -381,9 +381,11 @@ class TestEndToEndWorkflow:
         # Assert: Verify transfer succeeded
         assert results["success_count"] == 1
 
-        # Assert: Verify backup was created
-        backup_path = f"{target}.backup"
-        assert os.path.exists(backup_path), "Backup file should exist"
+        # Assert: Verify backup was created in backup folder
+        backup_folder = os.path.join(temp_dir, "backup")
+        backup_path = os.path.join(backup_folder, "target.jpg")
+        assert os.path.exists(backup_folder), "Backup folder should exist"
+        assert os.path.exists(backup_path), "Backup file should exist in backup folder"
 
         # Verify original file was modified (has GPS now)
         target_exif = piexif.load(target)
@@ -396,7 +398,7 @@ class TestEndToEndWorkflow:
 
     def test_multiple_backups_created(self, samples_dir, temp_dir):
         """
-        Integration test: Verify backups are created for multiple files
+        Integration test: Verify backups are created for multiple files in backup folder
         """
         # Arrange
         source = str(samples_dir / "exif.jpg")
@@ -409,9 +411,13 @@ class TestEndToEndWorkflow:
         # Act: Transfer GPS data
         results = transfer_gps_data_batch(source, targets)
 
-        # Assert: Verify all backups were created
+        # Assert: Verify all backups were created in backup folder
+        backup_folder = os.path.join(temp_dir, "backup")
+        assert os.path.exists(backup_folder), "Backup folder should exist"
+        
         for target in targets:
-            backup_path = f"{target}.backup"
+            filename = os.path.basename(target)
+            backup_path = os.path.join(backup_folder, filename)
             assert os.path.exists(backup_path), f"Backup should exist for {target}"
 
         # Verify processing succeeded
@@ -434,6 +440,8 @@ class TestEndToEndWorkflow:
         assert results["skipped"] == 1
         assert results["success_count"] == 0
 
-        # Assert: Backup should still be created even for skipped file
-        backup_path = f"{target}.backup"
+        # Assert: Backup should still be created even for skipped file in backup folder
+        backup_folder = os.path.join(temp_dir, "backup")
+        backup_path = os.path.join(backup_folder, "already_has_gps.jpg")
+        assert os.path.exists(backup_folder), "Backup folder should exist"
         assert os.path.exists(backup_path), "Backup SHOULD exist even for skipped files"
