@@ -8,7 +8,7 @@ A simple GUI application for transferring GPS EXIF data from one photo to multip
 - 📍 **Location Preview**: View source photo's GPS location on Google Maps with a clickable link
 - ⏰ Optional: Copy creation date/time from source (great for fixing WhatsApp photos)
 - 🔄 Optional: Skip files that already have GPS data (selective updates)
-- �📸 Support for multiple image formats: JPEG, PNG, TIFF, HEIC/HEIF
+- 📸 Support for multiple image formats: JPEG, PNG, TIFF, HEIC/HEIF
 - 💼 Case-insensitive file extension support (e.g., `.jpg`, `.JPG`)
 - 🖥️ Clean and intuitive GUI built with CustomTkinter
 - ✅ Batch processing with error handling and progress reporting
