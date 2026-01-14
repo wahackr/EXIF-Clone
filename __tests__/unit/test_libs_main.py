@@ -11,9 +11,12 @@ from PIL import Image
 
 from libs.main import (
     HEIF_SUPPORTED,
+    _create_backup,
     _extract_date_data,
+    _gps_to_decimal,
     _is_heic,
     _load_exif_from_heic,
+    extract_gps_coordinates,
     transfer_gps_data_batch,
 )
 
@@ -48,6 +51,57 @@ def source_heic_with_gps(samples_dir):
 def target_jpg_without_gps(samples_dir):
     """Path to JPEG target file without GPS data"""
     return str(samples_dir / "3ad41821-4905-4580-b82d-12f707a91512.jpg")
+
+
+class TestCreateBackup:
+    """Test _create_backup helper function"""
+
+    def test_create_backup_creates_file(self, temp_dir, samples_dir):
+        """Test that backup file is created in backup folder"""
+        # Copy a test file to temp directory
+        source_file = samples_dir / "exif.jpg"
+        test_file = os.path.join(temp_dir, "test.jpg")
+        shutil.copy(source_file, test_file)
+
+        # Create backup
+        backup_path = _create_backup(test_file)
+
+        # Verify backup exists in backup folder
+        assert os.path.exists(backup_path)
+        expected_backup_path = os.path.join(temp_dir, "backup", "test.jpg")
+        assert backup_path == expected_backup_path
+        assert os.path.exists(os.path.join(temp_dir, "backup"))
+
+    def test_backup_preserves_content(self, temp_dir, samples_dir):
+        """Test that backup file has same content as original"""
+        # Copy a test file to temp directory
+        source_file = samples_dir / "exif.jpg"
+        test_file = os.path.join(temp_dir, "test.jpg")
+        shutil.copy(source_file, test_file)
+
+        # Create backup
+        backup_path = _create_backup(test_file)
+
+        # Verify content is identical
+        with open(test_file, "rb") as f1, open(backup_path, "rb") as f2:
+            assert f1.read() == f2.read()
+
+    def test_backup_preserves_metadata(self, temp_dir, samples_dir):
+        """Test that backup file preserves file metadata"""
+        # Copy a test file to temp directory
+        source_file = samples_dir / "exif.jpg"
+        test_file = os.path.join(temp_dir, "test.jpg")
+        shutil.copy(source_file, test_file)
+
+        # Get original modification time
+        original_mtime = os.path.getmtime(test_file)
+
+        # Create backup
+        backup_path = _create_backup(test_file)
+
+        # Verify metadata is preserved (using copy2)
+        backup_mtime = os.path.getmtime(backup_path)
+        assert backup_mtime == original_mtime
 
 
 class TestIsHeic:
@@ -324,3 +378,85 @@ class TestTransferGpsDataBatch:
                     target_exif["Exif"].get(offset_tag)
                     == source_exif["Exif"][offset_tag]
                 ), f"Timezone offset tag {offset_tag} not copied correctly"
+
+
+class TestGPSCoordinateExtraction:
+    """Tests for GPS coordinate extraction and Google Maps URL generation"""
+
+    def test_extract_gps_coordinates_from_jpg(self, source_jpg_with_gps):
+        """Test extracting GPS coordinates from a JPEG file"""
+        from libs.main import extract_gps_coordinates
+
+        gps_info = extract_gps_coordinates(source_jpg_with_gps)
+
+        assert gps_info is not None
+        assert "latitude" in gps_info
+        assert "longitude" in gps_info
+        assert "maps_url" in gps_info
+        
+        # Check that coordinates are reasonable (Hong Kong area)
+        assert 22.0 < gps_info["latitude"] < 23.0
+        assert 114.0 < gps_info["longitude"] < 115.0
+        
+        # Check Google Maps URL format
+        assert gps_info["maps_url"].startswith("https://www.google.com/maps?q=")
+        assert str(gps_info["latitude"]) in gps_info["maps_url"]
+        assert str(gps_info["longitude"]) in gps_info["maps_url"]
+
+    def test_extract_gps_coordinates_from_file_without_gps(
+        self, target_jpg_without_gps
+    ):
+        """Test extracting GPS from a file without GPS data returns None"""
+        from libs.main import extract_gps_coordinates
+
+        gps_info = extract_gps_coordinates(target_jpg_without_gps)
+
+        assert gps_info is None
+
+    @pytest.mark.skipif(not HEIF_SUPPORTED, reason="HEIF support not available")
+    def test_extract_gps_coordinates_from_heic(self, source_heic_with_gps):
+        """Test extracting GPS coordinates from a HEIC file"""
+        from libs.main import extract_gps_coordinates
+
+        gps_info = extract_gps_coordinates(source_heic_with_gps)
+
+        assert gps_info is not None
+        assert "latitude" in gps_info
+        assert "longitude" in gps_info
+        assert "maps_url" in gps_info
+
+    def test_gps_to_decimal_north_east(self):
+        """Test GPS to decimal conversion for North and East"""
+        from libs.main import _gps_to_decimal
+
+        # 22°20'15.3" N should be approximately 22.3375
+        lat_coords = ((22, 1), (20, 1), (153, 10))
+        lat_decimal = _gps_to_decimal(lat_coords, "N")
+        assert abs(lat_decimal - 22.3375) < 0.01
+
+        # 114°13'26.9" E should be approximately 114.224
+        lon_coords = ((114, 1), (13, 1), (269, 10))
+        lon_decimal = _gps_to_decimal(lon_coords, "E")
+        assert abs(lon_decimal - 114.224) < 0.01
+
+    def test_gps_to_decimal_south_west(self):
+        """Test GPS to decimal conversion for South and West"""
+        from libs.main import _gps_to_decimal
+
+        # 22°20'15.3" S should be approximately -22.3375
+        lat_coords = ((22, 1), (20, 1), (153, 10))
+        lat_decimal = _gps_to_decimal(lat_coords, "S")
+        assert abs(lat_decimal - (-22.3375)) < 0.01
+
+        # 114°13'26.9" W should be approximately -114.224
+        lon_coords = ((114, 1), (13, 1), (269, 10))
+        lon_decimal = _gps_to_decimal(lon_coords, "W")
+        assert abs(lon_decimal - (-114.224)) < 0.01
+
+    def test_extract_gps_coordinates_invalid_file(self):
+        """Test extracting GPS from non-existent file"""
+        from libs.main import extract_gps_coordinates
+
+        gps_info = extract_gps_coordinates("/nonexistent/file.jpg")
+
+        assert gps_info is None

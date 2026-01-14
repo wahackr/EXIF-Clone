@@ -364,3 +364,84 @@ class TestEndToEndWorkflow:
                 target_exif["GPS"][piexif.GPSIFD.GPSLongitude]
                 == source_gps[piexif.GPSIFD.GPSLongitude]
             )
+
+    def test_backup_created_during_transfer(self, samples_dir, temp_dir):
+        """
+        Integration test: Verify backup files are created during GPS transfer in backup folder
+        """
+        # Arrange
+        source = str(samples_dir / "exif.jpg")
+        target_src = samples_dir / "3ad41821-4905-4580-b82d-12f707a91512.jpg"
+        target = os.path.join(temp_dir, "target.jpg")
+        shutil.copy(target_src, target)
+
+        # Act: Transfer GPS data
+        results = transfer_gps_data_batch(source, [target])
+
+        # Assert: Verify transfer succeeded
+        assert results["success_count"] == 1
+
+        # Assert: Verify backup was created in backup folder
+        backup_folder = os.path.join(temp_dir, "backup")
+        backup_path = os.path.join(backup_folder, "target.jpg")
+        assert os.path.exists(backup_folder), "Backup folder should exist"
+        assert os.path.exists(backup_path), "Backup file should exist in backup folder"
+
+        # Verify original file was modified (has GPS now)
+        target_exif = piexif.load(target)
+        assert "GPS" in target_exif
+        assert target_exif["GPS"]
+
+        # Verify backup doesn't have GPS (original state)
+        backup_exif = piexif.load(backup_path)
+        assert not backup_exif.get("GPS"), "Backup should not have GPS data"
+
+    def test_multiple_backups_created(self, samples_dir, temp_dir):
+        """
+        Integration test: Verify backups are created for multiple files in backup folder
+        """
+        # Arrange
+        source = str(samples_dir / "exif.jpg")
+        targets = []
+        for i in range(3):
+            target = os.path.join(temp_dir, f"target{i}.jpg")
+            shutil.copy(samples_dir / "3ad41821-4905-4580-b82d-12f707a91512.jpg", target)
+            targets.append(target)
+
+        # Act: Transfer GPS data
+        results = transfer_gps_data_batch(source, targets)
+
+        # Assert: Verify all backups were created in backup folder
+        backup_folder = os.path.join(temp_dir, "backup")
+        assert os.path.exists(backup_folder), "Backup folder should exist"
+        
+        for target in targets:
+            filename = os.path.basename(target)
+            backup_path = os.path.join(backup_folder, filename)
+            assert os.path.exists(backup_path), f"Backup should exist for {target}"
+
+        # Verify processing succeeded
+        assert results["success_count"] == 3
+
+    def test_backup_created_for_skipped_files(self, samples_dir, temp_dir):
+        """
+        Integration test: Verify backups ARE created even for files that are skipped
+        """
+        # Arrange: Use a file that already has GPS
+        source = str(samples_dir / "exif.jpg")
+        target = os.path.join(temp_dir, "already_has_gps.jpg")
+        shutil.copy(source, target)
+
+        # Act: Transfer with overwrite_gps=False (should skip)
+        options = {"overwrite_gps": False}
+        results = transfer_gps_data_batch(source, [target], options=options)
+
+        # Assert: File should be skipped
+        assert results["skipped"] == 1
+        assert results["success_count"] == 0
+
+        # Assert: Backup should still be created even for skipped file in backup folder
+        backup_folder = os.path.join(temp_dir, "backup")
+        backup_path = os.path.join(backup_folder, "already_has_gps.jpg")
+        assert os.path.exists(backup_folder), "Backup folder should exist"
+        assert os.path.exists(backup_path), "Backup SHOULD exist even for skipped files"

@@ -1,4 +1,5 @@
 import threading
+import webbrowser
 from tkinter import filedialog
 
 import customtkinter as ctk
@@ -17,7 +18,7 @@ class ExifTransferApp(ctk.CTk):
 
         # --- Window Configuration ---
         self.title("GPS Metadata Transfer")
-        self.geometry("500x550")
+        self.geometry("500x600")
 
         # --- UI Layout (The "View") ---
         self.label = ctk.CTkLabel(self, text="Step 1: Select Source Photo (with GPS)")
@@ -27,6 +28,11 @@ class ExifTransferApp(ctk.CTk):
             self, text="Choose Source", command=self.select_source
         )
         self.btn_source.pack(pady=5)
+
+        # Location preview label (initially hidden)
+        self.location_label = ctk.CTkLabel(self, text="", text_color="blue", cursor="hand2")
+        self.location_label.pack(pady=5)
+        self.location_label.pack_forget()  # Hide initially
 
         self.btn_targets = ctk.CTkButton(
             self, text="Choose Targets", command=self.select_targets
@@ -84,6 +90,28 @@ class ExifTransferApp(ctk.CTk):
         if file_path:
             self.source_path = file_path
             self.label.configure(text=f"Source: {file_path}")
+            
+            # Try to extract GPS coordinates
+            gps_info = libs.extract_gps_coordinates(file_path)
+            if gps_info:
+                # Display location preview link
+                self.location_label.configure(
+                    text=f"📍 Location: {gps_info['latitude']:.5f}, {gps_info['longitude']:.5f} (Click to view on map)"
+                )
+                # Unbind previous click events to avoid multiple bindings
+                self.location_label.unbind("<Button-1>")
+                # Bind click event to open Google Maps
+                self.location_label.bind("<Button-1>", lambda e: self._open_maps_url(gps_info['maps_url']))
+                # Show the label (it's initially hidden)
+                if not self.location_label.winfo_ismapped():
+                    self.location_label.pack(pady=5)
+            else:
+                # Hide location label if no GPS data
+                self.location_label.pack_forget()
+
+    def _open_maps_url(self, url):
+        """Open Google Maps URL in default browser"""
+        webbrowser.open(url)
 
     def select_targets(self):
         """Handle target files selection (UI layer)"""
@@ -135,7 +163,6 @@ class ExifTransferApp(ctk.CTk):
 
     def _process_in_background(self, source_path, target_files, options):
         """Run business logic in background thread"""
-        total = len(target_files)
 
         # Process files one at a time and update UI after each
         results = libs.transfer_gps_data_batch(
