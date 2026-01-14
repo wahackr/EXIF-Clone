@@ -5,9 +5,11 @@ A simple GUI application for transferring GPS EXIF data from one photo to multip
 ## Features
 
 - 🗺️ Transfer GPS coordinates from source image to multiple target images
-- � Optional: Copy creation date/time from source (great for fixing WhatsApp photos)
+- 📍 **Location Preview**: When GPS data is present in the source photo, view its location on Google Maps with a clickable link
+- 💾 **Automatic Backups**: Original files are automatically backed up to a `backup/` folder before any modifications
+- ⏰ Optional: Copy creation date/time from source (great for fixing WhatsApp photos)
 - 🔄 Optional: Skip files that already have GPS data (selective updates)
-- �📸 Support for multiple image formats: JPEG, PNG, TIFF, HEIC/HEIF
+- 📸 Support for multiple image formats: JPEG, PNG, TIFF, HEIC/HEIF
 - 💼 Case-insensitive file extension support (e.g., `.jpg`, `.JPG`)
 - 🖥️ Clean and intuitive GUI built with CustomTkinter
 - ✅ Batch processing with error handling and progress reporting
@@ -76,11 +78,14 @@ EXIF-Clone.exe
 ### How to Use
 
 1. **Select Source Photo**: Click "Choose Source" and select an image that contains GPS metadata
+   - If the source photo contains GPS data, a blue clickable link will appear showing the coordinates (e.g., "📍 Location: 22.33755, 114.22403 (Click to view on map)")
+   - Click this link to open the location on Google Maps in your default browser
 2. **Select Target Photos**: Click "Choose Targets" and select one or more images you want to add GPS data to
 3. **Configure Options** (optional):
    - **Copy creation date from source**: When enabled, also copies DateTimeOriginal, DateTimeDigitized, and DateTime fields. Useful for fixing dates on photos received via WhatsApp or other apps that reset file timestamps.
    - **Overwrite GPS if target already has it**: When disabled, skips files that already contain GPS data, useful for selective updates without overwriting existing location data.
 4. **Transfer GPS Data**: Click "Transfer GPS Data" to copy the GPS coordinates (and optionally dates) from the source to all target images
+   - **Automatic Backup**: Before making any changes, the application automatically creates backups of all target files in a `backup/` folder located in the same directory as your target photos
 
 The application will display:
 - Success message with the number of files processed
@@ -94,6 +99,36 @@ The application will display:
 - **PNG** (`.png`, `.PNG`)
 - **TIFF** (`.tiff`, `.TIFF`)
 - **HEIC/HEIF** (`.heic`, `.heif`, `.HEIC`, `.HEIF`) - Apple's format
+
+## Backup and Recovery
+
+The application automatically creates backups of all target photos before making any modifications to protect your original files.
+
+### How Backups Work
+
+- **Automatic Creation**: When you transfer GPS data, backups are created automatically before any changes are made
+- **Backup Location**: Backups are stored in a `backup/` folder in the same directory as your target photos
+- **File Names**: Backup files retain their original filenames (e.g., `photo.jpg` → `backup/photo.jpg`)
+- **Original State**: Backups preserve the exact original state of your files, including all metadata and timestamps
+
+### Restoring from Backup
+
+If you need to restore your original files:
+
+1. Navigate to the `backup/` folder in the same directory as your modified photos
+2. Copy the files from the `backup/` folder back to the parent directory
+3. Overwrite the modified files when prompted
+
+**Example:**
+```bash
+# Restore a single file
+cp backup/photo.jpg photo.jpg
+
+# Restore all files
+cp backup/* .
+```
+
+**Note:** The `backup/` folder is excluded from git tracking via `.gitignore` to prevent accidentally committing your personal photos.
 
 ## Project Structure
 
@@ -193,6 +228,7 @@ uv run pyinstaller --onefile --paths ./src --name EXIF-Clone ./src/app.py
 1. Load EXIF data from source image
 2. Extract GPS metadata (and optionally date/time data)
 3. For each target image:
+   - **Create backup** in `backup/` folder (preserves original file with all metadata)
    - Load existing EXIF data
    - Check if GPS should be skipped (if already exists and overwrite disabled)
    - Inject GPS metadata
