@@ -33,19 +33,104 @@ def _create_backup(file_path, backup_dir=None):
     if backup_dir is None:
         parent_dir = os.path.dirname(file_path)
         backup_dir = os.path.join(parent_dir, "backup")
-    
+
     # Create backup directory if it doesn't exist
     os.makedirs(backup_dir, exist_ok=True)
-    
+
     # Create backup with original filename in backup directory
     filename = os.path.basename(file_path)
     backup_path = os.path.join(backup_dir, filename)
-    
+
     try:
         shutil.copy2(file_path, backup_path)
     except (OSError, IOError) as e:
         raise OSError(f"Failed to create backup for {file_path}: {str(e)}")
     return backup_path
+
+
+def extract_gps_coordinates(file_path):
+    """
+    Extract GPS coordinates from an image file.
+
+    Args:
+        file_path: Path to the image file
+
+    Returns:
+        dict: Dictionary with 'latitude', 'longitude', and 'maps_url' keys,
+              or None if no GPS data is found
+    """
+    try:
+        # Load EXIF data
+        if _is_heic(file_path):
+            if not HEIF_SUPPORTED:
+                return None
+            exif_dict = _load_exif_from_heic(file_path)
+        else:
+            exif_dict = piexif.load(file_path)
+
+        gps_data = exif_dict.get("GPS")
+        if not gps_data:
+            return None
+
+        # Check if required GPS tags exist
+        # 1=GPSLatitudeRef, 2=GPSLatitude, 3=GPSLongitudeRef, 4=GPSLongitude
+        if not all(tag in gps_data for tag in [1, 2, 3, 4]):
+            return None
+
+        # Extract latitude
+        lat_ref = _decode_gps_ref(gps_data[1])
+        lat_decimal = _gps_to_decimal(gps_data[2], lat_ref)
+
+        # Extract longitude
+        lon_ref = _decode_gps_ref(gps_data[3])
+        lon_decimal = _gps_to_decimal(gps_data[4], lon_ref)
+
+        # Generate Google Maps URL
+        maps_url = f"https://www.google.com/maps?q={lat_decimal},{lon_decimal}"
+
+        return {
+            "latitude": lat_decimal,
+            "longitude": lon_decimal,
+            "maps_url": maps_url,
+        }
+    except Exception:
+        return None
+
+
+def _decode_gps_ref(ref_data):
+    """
+    Decode GPS reference data to string.
+
+    Args:
+        ref_data: GPS reference data (bytes or string)
+
+    Returns:
+        str: Decoded reference ('N', 'S', 'E', or 'W')
+    """
+    return ref_data.decode() if isinstance(ref_data, bytes) else ref_data
+
+
+def _gps_to_decimal(gps_coords, ref):
+    """
+    Convert GPS coordinates from degrees/minutes/seconds to decimal degrees.
+
+    Args:
+        gps_coords: Tuple of ((degrees_num, degrees_den), (minutes_num, minutes_den), (seconds_num, seconds_den))
+        ref: Reference direction ('N', 'S', 'E', or 'W')
+
+    Returns:
+        float: Decimal degrees
+    """
+    degrees = gps_coords[0][0] / gps_coords[0][1]
+    minutes = gps_coords[1][0] / gps_coords[1][1]
+    seconds = gps_coords[2][0] / gps_coords[2][1]
+
+    decimal = degrees + (minutes / 60.0) + (seconds / 3600.0)
+
+    if ref in ["S", "W"]:
+        decimal = -decimal
+
+    return decimal
 
 
 def transfer_gps_data_batch(
