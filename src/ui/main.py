@@ -135,7 +135,6 @@ class ExifTransferApp(ctk.CTk):
 
     def _process_in_background(self, source_path, target_files, options):
         """Run business logic in background thread"""
-        total = len(target_files)
 
         # Process files one at a time and update UI after each
         results = libs.transfer_gps_data_batch(
