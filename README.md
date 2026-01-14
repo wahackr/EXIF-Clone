@@ -5,7 +5,7 @@ A simple GUI application for transferring GPS EXIF data from one photo to multip
 ## Features
 
 - 🗺️ Transfer GPS coordinates from source image to multiple target images
-- 📍 **Location Preview**: View source photo's GPS location on Google Maps with a clickable link
+- 📍 **Location Preview**: When GPS data is present in the source photo, view its location on Google Maps with a clickable link
 - ⏰ Optional: Copy creation date/time from source (great for fixing WhatsApp photos)
 - 🔄 Optional: Skip files that already have GPS data (selective updates)
 - 📸 Support for multiple image formats: JPEG, PNG, TIFF, HEIC/HEIF
@@ -77,8 +77,8 @@ EXIF-Clone.exe
 ### How to Use
 
 1. **Select Source Photo**: Click "Choose Source" and select an image that contains GPS metadata
-   - If the source photo contains GPS data, a clickable location preview link will appear below the file path
-   - Click the 📍 location link to view the coordinates on Google Maps in your browser
+   - If the source photo contains GPS data, a blue clickable link will appear showing the coordinates (e.g., "📍 Location: 22.33755, 114.22403 (Click to view on map)")
+   - Click this link to open the location on Google Maps in your default browser
 2. **Select Target Photos**: Click "Choose Targets" and select one or more images you want to add GPS data to
 3. **Configure Options** (optional):
    - **Copy creation date from source**: When enabled, also copies DateTimeOriginal, DateTimeDigitized, and DateTime fields. Useful for fixing dates on photos received via WhatsApp or other apps that reset file timestamps.
